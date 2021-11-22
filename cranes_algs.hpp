@@ -47,7 +47,30 @@ path crane_unloading_exhaustive(const grid& setting) {
 
       path candidate(setting);
       bool valid = true;
+      for (size_t k = 0; k < steps; ++k)
+      {
         // add to candidate a path not exceedings <steps> binary values
+        size_t bit = (bits >> k) & 1;
+        if (bit == 1)
+        {
+          if (candidate.is_step_valid(STEP_DIRECTION_EAST))
+          {
+            candidate.add_step(STEP_DIRECTION_EAST);
+            valid = true;
+          }
+          else valid = false;
+        }
+        else
+        {
+          if (candidate.is_step_valid(STEP_DIRECTION_SOUTH))
+          {
+            candidate.add_step(STEP_DIRECTION_SOUTH);
+          }
+          else valid = false;
+        }
+        
+      }
+      
        
       if (valid && (candidate.total_cranes() > best.total_cranes())) {
         best = candidate;
