@@ -1,4 +1,3 @@
-
 CXX = g++ -std=c++17 -Wall
 
 all: run_test cranes_timing

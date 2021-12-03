@@ -3,8 +3,6 @@
 //
 // Algorithms that solve the crane unloading problem.
 //
-// All of the TODO sections for this project reside in this file.
-//
 // This file builds on crane_types.hpp, so you should familiarize yourself
 // with that file before working on this file.
 //
@@ -40,40 +38,36 @@ path crane_unloading_exhaustive(const grid& setting) {
 
   for (size_t steps = 1; steps <= max_steps; ++steps) {
     uint64_t mask = uint64_t(1) << steps;
-    for (uint64_t bits = 0; bits < mask; ++bits) {
 
+    for (uint64_t bits = 0; bits < mask; ++bits) {
       path candidate(setting);
       bool valid = true;
-      for (size_t k = 0; k < steps; ++k)
-      {
+
+      for (size_t k = 0; k < steps; ++k) {
         // add to candidate a path not exceedings <steps> binary values
         size_t bit = (bits >> k) & 1;
-        if (bit == 1)
-        {
-          if (candidate.is_step_valid(STEP_DIRECTION_EAST))
-          {
+
+        if (bit == 1) {
+          if (candidate.is_step_valid(STEP_DIRECTION_EAST)) {
             candidate.add_step(STEP_DIRECTION_EAST);
             valid = true;
           }
           else valid = false;
         }
-        else
-        {
-          if (candidate.is_step_valid(STEP_DIRECTION_SOUTH))
-          {
+        else {
+          if (candidate.is_step_valid(STEP_DIRECTION_SOUTH)) {
             candidate.add_step(STEP_DIRECTION_SOUTH);
           }
           else valid = false;
-        }
-        
+        }  
       }
-      
-       
+ 
       if (valid && (candidate.total_cranes() > best.total_cranes())) {
         best = candidate;
       }
     }
   }
+
   return best;
 }
 
@@ -87,13 +81,9 @@ path crane_unloading_dyn_prog(const grid& setting) {
   assert(setting.rows() > 0);
   assert(setting.columns() > 0);
 
-  // TODO: implement the dynamic programming algorithm, then delete this
-  // comment.
-
   using cell_type = std::optional<path>;
 
-  std::vector<std::vector<cell_type>> A(setting.rows(),
-                                        std::vector<cell_type>(setting.columns()));
+  std::vector<std::vector<cell_type>> A(setting.rows(), std::vector<cell_type>(setting.columns()));
 
   A[0][0] = path(setting);
   assert(A[0][0].has_value());
@@ -101,7 +91,6 @@ path crane_unloading_dyn_prog(const grid& setting) {
   for (coordinate r = 0; r < setting.rows(); ++r) {
     for (coordinate c = 0; c < setting.columns(); ++c) {
       if (setting.get(r, c) == CELL_BUILDING) {
-
         // set the value for A[r][c] as a path collecting most cranes
         A[r][c].reset();
         continue;
@@ -112,6 +101,7 @@ path crane_unloading_dyn_prog(const grid& setting) {
 
       if (r > 0 && A[r-1][c].has_value()) {
         from_above = A[r-1][c];
+
         if (from_above->is_step_valid(STEP_DIRECTION_SOUTH)) {
           from_above->add_step(STEP_DIRECTION_SOUTH);
         }
@@ -119,6 +109,7 @@ path crane_unloading_dyn_prog(const grid& setting) {
 
       if (c > 0 && A[r][c-1].has_value()) {
         from_left = A[r][c-1];
+
         if (from_left->is_step_valid(STEP_DIRECTION_EAST)) {
           from_left->add_step(STEP_DIRECTION_EAST);
         }
@@ -128,7 +119,6 @@ path crane_unloading_dyn_prog(const grid& setting) {
         if (from_above->total_cranes() > from_left->total_cranes()) {
           A[r][c] = from_above;
         }
-
         else {
           A[r][c] = from_left;
         }
@@ -150,6 +140,7 @@ path crane_unloading_dyn_prog(const grid& setting) {
 
   cell_type* best = &(A[0][0]);
   assert(best->has_value());
+
   for (coordinate r = 0; r < setting.rows(); ++r) {
     for (coordinate c = 0; c < setting.columns(); ++c) {
       if (A[r][c].has_value() && A[r][c]->total_cranes() > (*best)->total_cranes()) {
@@ -159,7 +150,7 @@ path crane_unloading_dyn_prog(const grid& setting) {
   }
 
   assert(best->has_value());
-    //std::cout << "total cranes" << (**best).total_cranes() << std::endl;
+  //std::cout << "total cranes" << (**best).total_cranes() << std::endl;
 
   return **best;
 }

@@ -3,7 +3,6 @@
 //
 // Data types for the input and output of the crane unloading problem.
 //
-// You should leave this file as-is; there are no TODO parts in this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -15,8 +14,6 @@
 #include <random>
 #include <string>
 #include <vector>
-
-// TODO
 #include <optional>
 
 namespace cranes {
@@ -37,13 +34,13 @@ public:
   // Create a grid with the given number of rows and columns, all initialized
   // to hold CELL_ROAD.
   grid(coordinate rows, coordinate columns)
-  : cells_(rows, std::vector<cell_kind>(columns, CELL_ROAD)) {
+    : cells_(rows, std::vector<cell_kind>(columns, CELL_ROAD)) {
 
     assert(rows > 0);
     assert(columns > 0);
   }
 
-  // Accessors.
+  // Accessors
   coordinate rows() const { return cells_.size(); }
   coordinate columns() const { return cells_.front().size(); }
 
@@ -76,24 +73,27 @@ public:
   // This is the case when those are valid row-column values, and also
   // that cell is not CELL_BUILDING.
   bool may_step(coordinate row, coordinate column) const {
-    return (is_row_column(row, column) &&
-            (cells_[row][column] != CELL_BUILDING));
+    return (is_row_column(row, column) && (cells_[row][column] != CELL_BUILDING));
   }
 
   // Return strings corresponding to lines of text in a human-readable
   // representation of the grid.
   std::vector<std::string> printable() const {
     std::vector<std::string> result(rows(), std::string(columns(), '.'));
+
     for (coordinate r = 0; r < rows(); ++r) {
       for (coordinate c = 0; c < columns(); ++c) {
         auto cell = get(r, c);
+
         if (cell == CELL_CRANE) {
           result[r][c] = 'c';
-        } else if (cell == CELL_BUILDING) {
+        }
+        else if (cell == CELL_BUILDING) {
           result[r][c] = 'X';
         }
       }
     }
+
     return result;
   }
 
@@ -109,9 +109,8 @@ public:
   // positive. The number of crane and building cells must be less than the number
   // of total cells in the grid.
   template <typename URNG>
-  static grid random(coordinate rows, coordinate columns,
-                     unsigned crane_count, unsigned building_count,
-                     URNG&& gen) {
+  static grid random(coordinate rows, coordinate columns, unsigned crane_count, 
+                     unsigned building_count, URNG&& gen) {
 
     assert(rows > 0);
     assert(columns > 0);
@@ -120,17 +119,14 @@ public:
     // The output grid, at this point all cells are road.
     grid result(rows, columns);
 
-    // Next we are going to shuffle all the positions that could contain the
+    // Next, we are going to shuffle all the positions that could contain the
     // cranes or buildings, and use the shuffled order to place those cells randomly.
     // This approach makes it easy to prevent the crane/building cells from colliding
     // or being placed at (0, 0).
 
     struct position {
-
       coordinate row, column;
-
-      position(coordinate r, coordinate c)
-      : row(r), column(c) { }
+      position(coordinate r, coordinate c) : row(r), column(c) { }
     };
 
     // Build a vector of every position except (0, 0).
@@ -142,6 +138,7 @@ public:
         }
       }
     }
+
     // Shuffle the vector randomly using the provided random number generator.
     shuffle(positions.begin(), positions.end(), gen);
 
@@ -181,10 +178,9 @@ private:
 public:
 
   // Create a step in the given direction.
-  step(step_direction direction)
-  : direction_(direction) { }
+  step(step_direction direction) : direction_(direction) { }
 
-  // Accessor.
+  // Accessor
   step_direction direction() const { return direction_; }
 
   // Return the number of rows/columns that we move along when we take this step.
@@ -194,19 +190,22 @@ public:
   coordinate delta_row() const {
     if (direction_ == STEP_DIRECTION_SOUTH) {
       return 1;
-    } else {
-      return 0;
     }
-  }
-  coordinate delta_column() const {
-    if (direction_ == STEP_DIRECTION_EAST) {
-      return 1;
-    } else {
+    else {
       return 0;
     }
   }
 
-  // Equality operator, for unit testing.
+  coordinate delta_column() const {
+    if (direction_ == STEP_DIRECTION_EAST) {
+      return 1;
+    }
+    else {
+      return 0;
+    }
+  }
+
+  // Equality operator, for unit testing
   bool operator== (const step& o) const {
     return (direction_ == o.direction_);
   }
@@ -252,13 +251,14 @@ public:
   // by the algorithms.
   path(const grid& setting, const std::vector<step_direction>& steps_after_start) {
     initialize(setting);
+
     for (auto& step : steps_after_start) {
       assert(is_step_valid(step));
       add_step(step);
     }
   }
 
-  // Accessors.
+  // Accessors
   const grid& setting() const { return *setting_; }
   const std::vector<step>& steps() const { return steps_; }
   coordinate final_row() const { return final_row_; }
@@ -273,6 +273,7 @@ public:
   coordinate row_after(step_direction dir) const {
     return final_row() + step(dir).delta_row();
   }
+
   coordinate column_after(step_direction dir) const {
     return final_column() + step(dir).delta_column();
   }
@@ -282,21 +283,19 @@ public:
   // try to step into a CELL_BUILDING cell.
   bool is_step_valid(step_direction dir) const {
     auto row = row_after(dir), column = column_after(dir);
-    return ((dir != STEP_DIRECTION_START) &&
-            setting_->is_row_column(row, column) &&
+    return ((dir != STEP_DIRECTION_START) && setting_->is_row_column(row, column) &&
             (setting_->get(row, column) != CELL_BUILDING));
   }
 
   // Add one step, which must be valid as determined by is_step_valid.
   void add_step(step_direction dir) {
-
     assert(is_step_valid(dir));
-
     steps_.emplace_back(dir);
 
     // Update final row, column, and total number of cranes.
     final_row_ = row_after(dir);
     final_column_ = column_after(dir);
+
     if (setting_->get(final_row_, final_column_) == CELL_CRANE) {
       ++total_cranes_;
     }
@@ -305,19 +304,19 @@ public:
   // Return strings corresponding to lines of text in a human-readable
   // representation of the path super-imposed on top of its grid.
   std::vector<std::string> printable() const {
-
     auto lines = setting_->printable();
-
     coordinate row = 0, column = 0;
-    for (auto& s : steps_) {
 
+    for (auto& s : steps_) {
       row += s.delta_row();
       column += s.delta_column();
 
       char c;
+
       if (setting_->get(row, column) == CELL_CRANE) {
         c = 'C';
-      } else {
+      }
+      else {
         c = '+';
       }
 
@@ -332,16 +331,15 @@ public:
     for (auto& line : printable()) {
       std::cout << line << std::endl;
     }
-    std::cout << "steps=" << steps_.size()
-              << " cranes=" << total_cranes_
+
+    std::cout << "steps=" << steps_.size() << " cranes=" << total_cranes_
               << std::endl;
   }
 
-  // Equality operator, for unit testing.
+  // Equality operator, for unit testing
   bool operator==(const path& o) const {
     return std::equal(steps_.begin(), steps_.end(), o.steps_.begin());
   }
-
 };
 
 }

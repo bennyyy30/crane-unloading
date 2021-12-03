@@ -21,10 +21,8 @@ class TestFailureException {
 public:
   // line is source code line, probably from __LINE__;
   // file is source code filename, probably from __FILE__; and
-  // message is a brief decription of the test case.
-  TestFailureException(int line,
-		       const std::string file,
-		       const std::string& message)
+  // message is a brief decription of the test case
+  TestFailureException(int line, const std::string file, const std::string& message)
     : _line(line),
       _file(file),
       _message(message) { }
@@ -49,17 +47,13 @@ public:
   // name is a human-readable name;
   // points is the positive number of points awarded for this criterion; and
   // test is a function that takes no arguments and returns void, and
-  // should perform a number of unit tests using the TEST_... macros
-  // below.
-  RubricCriterion(const std::string& name,
-		  int points,
-		  std::function<void()> test)
+  // should perform a number of unit tests using the TEST_... macros below.
+  RubricCriterion(const std::string& name, int points, std::function<void()> test)
     : _name(name),
       _points(points),
-      _test(test)
-  { assert(points > 0); }
+      _test(test) { assert(points > 0); }
 
-  // Accessors.
+  // Accessors
   const std::string& name() const { return _name; }
   int points() const { return _points; }
   const std::function<void()>& test() const { return _test; }
@@ -78,9 +72,7 @@ public:
   Rubric() { }
 
   // Add a criterion with the given name, points, and test function.
-  void criterion(const std::string& name,
-		 int points,
-		 std::function<void()> test) {
+  void criterion(const std::string& name, int points, std::function<void()> test) {
     _criteria.push_back(RubricCriterion(name, points, test));
   }
 
@@ -89,53 +81,43 @@ public:
   // tests pass, or 1 otherwise; this return value is suitable for the
   // return value of main() in a unit-test program.
   int run() {
-
     int earned_points(0), total_points(0);
     bool all_passed(true);
 
-    for ( auto& criterion : _criteria ) {
-
+    for (auto& criterion : _criteria) {
       std::cout << criterion.name() << ": ";
-
       try {
+        // run this criterion's test function
+        criterion.test()();
 
-	// run this criterion's test function
-	criterion.test()();
+        // if that function call threw an exception, we never reach these lines
+        std::cout << "passed, score " <<  criterion.points() 
+                  << "/" << criterion.points() << std::endl;
 
-	// if that function call threw an exception, we never reach these lines
-	std::cout << "passed, score "
-		  <<  criterion.points() << "/" << criterion.points()
-		  << std::endl;
+        earned_points += criterion.points();
+      }
 
-	earned_points += criterion.points();
+      catch (TestFailureException e) {
+        // test function threw an exception; test failed
+        std::cout << std::endl << "    TEST FAILED: " << std::endl
+                  << "    line " << e.line() << " of file " << e.file()
+                  << ", message: " << e.message() << std::endl
+                  << "    score 0/" << criterion.points() << std::endl;
 
-      } catch (TestFailureException e) {
-
-	// test function threw an exception; test failed
-	std::cout << std::endl
-		  << "    TEST FAILED: " << std::endl
-		  << "    line " << e.line()
-		  << " of file " << e.file()
-		  << ", message: " << e.message()
-		  << std::endl
-		  << "    score 0/" << criterion.points()
-		  << std::endl;
-
-	all_passed = false;
+        all_passed = false;
       }
 
       total_points += criterion.points();
     }
 
     // print summary score
-    std::cout << "TOTAL SCORE = "
-	      << earned_points << " / " << total_points
-	      << std::endl
-	      << std::endl;
+    std::cout << "TOTAL SCORE = " << earned_points << " / " << total_points 
+              << std::endl << std::endl;
 
     if (all_passed) {
       return 0;
-    } else {
+    }
+    else {
       return 1;
     }
   }
@@ -156,38 +138,34 @@ private:
 #define TEST_FAIL(message) \
   throw TestFailureException(__LINE__, __FILE__, std::string(message))
 
-// Expects the expression (expr) to be false.
+// Expects the expression (expr) to be false
 #define TEST_FALSE(message, expr) \
   { if (expr) { TEST_FAIL(message); } }
 
-// Expects the expression (expr) to be true.
+// Expects the expression (expr) to be true
 #define TEST_TRUE(message, expr) \
   TEST_FALSE(message, ! (expr) )
 
-// Expects (x) == (y).
+// Expects (x) == (y)
 #define TEST_EQUAL(message, x, y) \
   TEST_TRUE(message, (x) == (y))
 
-// Expects (x) != (y).
+// Expects (x) != (y)
 #define TEST_NOT_EQUAL(message, x, y) \
   TEST_TRUE(message, (x) != (y))
 
-// Expects (x) > (y).
+// Expects (x) > (y)
 #define TEST_GT(message, x, y) \
   TEST_TRUE(message, (x) > (y))
 
-// Expects (x) >= (y).
+// Expects (x) >= (y)
 #define TEST_GE(message, x, y) \
   TEST_TRUE(message, (x) >= (y))
 
-// Expects (x) < (y).
+// Expects (x) < (y)
 #define TEST_LT(message, x, y) \
   TEST_TRUE(message, (x) < (y))
 
-// Expects (x) <= (y).
+// Expects (x) <= (y)
 #define TEST_LE(message, x, y) \
   TEST_TRUE(message, (x) <= (y))
-
-///////////////////////////////////////////////////////////////////////////////
-// rubrictest.hh
-///////////////////////////////////////////////////////////////////////////////

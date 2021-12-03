@@ -9,16 +9,13 @@
 #include <random>
 
 #include "rubrictest.hpp"
-
-//#include "cranes_types.hpp"
 #include "cranes_algs.hpp"
+//#include "cranes_types.hpp"
 
 int main() {
-
   Rubric rubric;
 
-  const cranes::step_direction E = cranes::STEP_DIRECTION_EAST,
-                               S = cranes::STEP_DIRECTION_SOUTH;
+  const cranes::step_direction E = cranes::STEP_DIRECTION_EAST, S = cranes::STEP_DIRECTION_SOUTH;
 
   cranes::grid empty2(2, 2), empty4(4, 4);
   cranes::path empty2_solution(empty2), empty4_solution(empty4);
@@ -63,71 +60,62 @@ int main() {
                medium_random = cranes::grid::random(12, 24, 20, 20, gen),
                large_random =  cranes::grid::random(20, 79, 30, 70, gen);
 
+  rubric.criterion("exhaustive optimization - simple cases", 4, [&]() {
+    TEST_EQUAL("empty2", empty2_solution, crane_unloading_exhaustive(empty2));
+    TEST_EQUAL("empty4", empty4_solution, crane_unloading_exhaustive(empty4));
+    TEST_EQUAL("horizontal", horizontal_solution, crane_unloading_exhaustive(horizontal));
+    TEST_EQUAL("vertical", vertical_solution, crane_unloading_exhaustive(vertical));
+    auto output = crane_unloading_exhaustive(all_cranes);
+    TEST_EQUAL("all_cranes path length", 7, output.steps().size());
+    TEST_EQUAL("all_cranes total cranes", 6, output.total_cranes());
+  });
 
-  rubric.criterion("exhaustive optimization - simple cases", 4,
-		   [&]() {
-         TEST_EQUAL("empty2", empty2_solution, crane_unloading_exhaustive(empty2));
-         TEST_EQUAL("empty4", empty4_solution, crane_unloading_exhaustive(empty4));
-         TEST_EQUAL("horizontal", horizontal_solution, crane_unloading_exhaustive(horizontal));
-         TEST_EQUAL("vertical", vertical_solution, crane_unloading_exhaustive(vertical));
-         auto output = crane_unloading_exhaustive(all_cranes);
-         TEST_EQUAL("all_cranes path length", 7, output.steps().size());
-         TEST_EQUAL("all_cranes total cranes", 6, output.total_cranes());
-		   });
+  rubric.criterion("exhaustive optimization - maze", 1, [&]() {
+    TEST_EQUAL("correct", maze_solution, crane_unloading_exhaustive(maze));
+  });
 
-  rubric.criterion("exhaustive optimization - maze", 1,
-		   [&]() {
-         TEST_EQUAL("correct", maze_solution, crane_unloading_exhaustive(maze));
-		   });
+  rubric.criterion("dynamic programming - simple cases", 4, [&]() {
+    TEST_EQUAL("empty2", empty2_solution, crane_unloading_dyn_prog(empty2));
+    TEST_EQUAL("empty4", empty4_solution, crane_unloading_dyn_prog(empty4));
+    TEST_EQUAL("horizontal", horizontal_solution, crane_unloading_dyn_prog(horizontal));
+    TEST_EQUAL("vertical", vertical_solution, crane_unloading_dyn_prog(vertical));
+    auto output = crane_unloading_dyn_prog(all_cranes);
+    TEST_EQUAL("all_cranes path length", 7, output.steps().size());
+    TEST_EQUAL("all_cranes total cranes", 6, output.total_cranes());
+  });
 
-  rubric.criterion("dynamic programming - simple cases", 4,
-		   [&]() {
-         TEST_EQUAL("empty2", empty2_solution, crane_unloading_dyn_prog(empty2));
-         TEST_EQUAL("empty4", empty4_solution, crane_unloading_dyn_prog(empty4));
-         TEST_EQUAL("horizontal", horizontal_solution, crane_unloading_dyn_prog(horizontal));
-         TEST_EQUAL("vertical", vertical_solution, crane_unloading_dyn_prog(vertical));
-         auto output = crane_unloading_dyn_prog(all_cranes);
-         TEST_EQUAL("all_cranes path length", 7, output.steps().size());
-         TEST_EQUAL("all_cranes total cranes", 6, output.total_cranes());
-		   });
+  rubric.criterion("dynamic programming - maze", 1, [&]() {
+    TEST_EQUAL("correct", maze_solution, crane_unloading_dyn_prog(maze));
+  });
 
-  rubric.criterion("dynamic programming - maze", 1,
-		   [&]() {
-         TEST_EQUAL("correct", maze_solution, crane_unloading_dyn_prog(maze));
-		   });
+  rubric.criterion("dynamic programming - random instances", 1, [&]() {
+    std::cout << std::endl;
 
-  rubric.criterion("dynamic programming - random instances", 1,
-		   [&]() {
-         std::cout << std::endl;
+    auto small_output = crane_unloading_dyn_prog(small_random);
+    TEST_EQUAL("small", 4, small_output.total_cranes());
 
-         auto small_output = crane_unloading_dyn_prog(small_random);
-         TEST_EQUAL("small", 4, small_output.total_cranes());
+    auto medium_output = crane_unloading_dyn_prog(medium_random);
+    TEST_EQUAL("medium", 8, medium_output.total_cranes());
 
-         auto medium_output = crane_unloading_dyn_prog(medium_random);
-         TEST_EQUAL("medium", 8, medium_output.total_cranes());
+    auto large_output = crane_unloading_dyn_prog(large_random);
+    TEST_EQUAL("large", 11, large_output.total_cranes());
+  });
 
-         auto large_output = crane_unloading_dyn_prog(large_random);
-         TEST_EQUAL("large", 11, large_output.total_cranes());
-		   });
+  rubric.criterion("stress test", 2, [&]() {
+    const cranes::coordinate ROWS = 5, MAX_COLUMNS = 15;
+    const unsigned SEED = 20181130;
 
-  rubric.criterion("stress test", 2,
-		   [&]() {
-         const cranes::coordinate ROWS = 5,
-                                  MAX_COLUMNS = 15;
-         const unsigned SEED = 20181130;
+    std::mt19937 gen(SEED);
 
-         std::mt19937 gen(SEED);
+    for (cranes::coordinate columns = 1; columns <= MAX_COLUMNS; ++columns) {
+      auto area = ROWS * columns, cranes = area / 5, buildings = area / 10;
+      cranes::grid setting = cranes::grid::random(ROWS, columns, cranes, buildings, gen);
 
-         for (cranes::coordinate columns = 1; columns <= MAX_COLUMNS; ++columns) {
-           auto area = ROWS * columns,
-                cranes = area / 5,
-                buildings = area / 10;
-           cranes::grid setting = cranes::grid::random(ROWS, columns, cranes, buildings, gen);
-           TEST_EQUAL("random grid with " + std::to_string(columns) + " columns",
-                      cranes::crane_unloading_exhaustive(setting).total_cranes(),
-                      cranes::crane_unloading_dyn_prog(setting).total_cranes());
-         }
-		   });
+      TEST_EQUAL("random grid with " + std::to_string(columns) + " columns",
+                 cranes::crane_unloading_exhaustive(setting).total_cranes(),
+                 cranes::crane_unloading_dyn_prog(setting).total_cranes());
+    }
+  });
 
   return rubric.run();
 }

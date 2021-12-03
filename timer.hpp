@@ -11,10 +11,10 @@
 // How to use:
 //
 //    // do slow initialization before creating a Timer
-//    Timer timer;
+//    i.e. Timer timer;
 //    // timer is now running, immediately run the code you want timed
-//    double elapsed = timer.elapsed();
-//    cout << "Elapsed time in seconds: " << elapsed << endl;
+//    i.e. double elapsed = timer.elapsed();
+//         cout << "Elapsed time in seconds: " << elapsed << endl;
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -26,7 +26,6 @@
 class Timer {
 private:
   std::chrono::high_resolution_clock::time_point _start;
-
 public:
 
   // Create a new Timer that is running as soon as it is created.
@@ -39,8 +38,7 @@ public:
     _start = std::chrono::high_resolution_clock::now();
   }
 
-  // Return the number of seconds since the timer was created, or the
-  // last time it was reset.
+  // Return the number of seconds since the timer was created, or the last time it was reset.
   double elapsed() const {
     auto end = std::chrono::high_resolution_clock::now();
     assert(end >= _start);
