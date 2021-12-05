@@ -90,8 +90,9 @@ int main() {
 
   rubric.criterion("dynamic programming - random instances", 1, [&]() {
     std::cout << std::endl;
-
+    
     auto small_output = crane_unloading_dyn_prog(small_random);
+    std::cout << "RESULT IS " << small_output.total_cranes() << std::endl;
     TEST_EQUAL("small", 4, small_output.total_cranes());
 
     auto medium_output = crane_unloading_dyn_prog(medium_random);
