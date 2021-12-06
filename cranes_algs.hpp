@@ -90,53 +90,49 @@ path crane_unloading_dyn_prog(const grid& setting) {
 
   for (coordinate r = 0; r < setting.rows(); ++r) {
     for (coordinate c = 0; c < setting.columns(); ++c) {
-      if (setting.get(r, c) == CELL_BUILDING) {
+      if (setting.get(r, c) != CELL_BUILDING) {
         // set the value for A[r][c] as a path collecting most cranes
-        A[r][c].reset();
-        continue;
-      }
+        // continue;
+        cell_type from_above;
+        cell_type from_left;
 
-      cell_type from_above;
-      cell_type from_left;
+        if (r > 0 && A[r-1][c].has_value()) {
+          from_above = A[r-1][c];
 
-      if (r > 0 && A[r-1][c].has_value()) {
-        from_above = A[r-1][c];
-
-        if (from_above->is_step_valid(STEP_DIRECTION_SOUTH)) {
-          from_above->add_step(STEP_DIRECTION_SOUTH);
+          if (from_above->is_step_valid(STEP_DIRECTION_SOUTH)) {
+            from_above->add_step(STEP_DIRECTION_SOUTH);
+          }
         }
-      }
 
-      if (c > 0 && A[r][c-1].has_value()) {
-        from_left = A[r][c-1];
+        if (c > 0 && A[r][c-1].has_value()) {
+          from_left = A[r][c-1];
 
-        if (from_left->is_step_valid(STEP_DIRECTION_EAST)) {
-          from_left->add_step(STEP_DIRECTION_EAST);
+          if (from_left->is_step_valid(STEP_DIRECTION_EAST)) {
+            from_left->add_step(STEP_DIRECTION_EAST);
+          }
         }
-      }
 
-      if (from_above.has_value() && from_left.has_value()) {
-        if (from_above->total_cranes() > from_left->total_cranes()) {
+        // whichever of from_above and from_left is non-None and reaches more cranes; 
+        // or None if both from_above and from_left are None
+        if (from_above.has_value() && from_left.has_value()) {
+          if (from_above->total_cranes() > from_left->total_cranes()) {
+            A[r][c] = from_above;
+          }
+          else {
+            A[r][c] = from_left;
+          }
+        }
+
+        if (from_above.has_value() && !(from_left.has_value())) {
           A[r][c] = from_above;
         }
-        else {
+
+        if (from_left.has_value() && !(from_above.has_value())) {
           A[r][c] = from_left;
         }
       }
-
-      else if (from_above.has_value() && !from_left.has_value()) {
-        A[r][c] = from_above;
-      }
-
-      else if (from_left.has_value() && !from_above.has_value()) {
-        A[r][c] = from_left;
-      }
-
-      else {
-        A[r][c] = path(setting);
-      }
     }
-  }
+  }      
 
   cell_type* best = &(A[0][0]);
   assert(best->has_value());
