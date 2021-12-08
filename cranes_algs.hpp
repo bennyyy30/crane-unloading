@@ -50,7 +50,6 @@ path crane_unloading_exhaustive(const grid& setting) {
         if (bit == 1) {
           if (candidate.is_step_valid(STEP_DIRECTION_EAST)) {
             candidate.add_step(STEP_DIRECTION_EAST);
-            valid = true;
           }
           else valid = false;
         }
