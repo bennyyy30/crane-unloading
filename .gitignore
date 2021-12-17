@@ -32,4 +32,6 @@
 *.app
 
 
+# Other executable files after compilation
 cranes_test
+cranes_timing
